@@ -1,39 +1,76 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# flutter_esc_pos_network
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages). 
+The library allows to print receipts using an ESC/POS thermal WiFi/Ethernet printer. For Bluetooth printers, use [esc_pos_bluetooth](https://github.com/andrey-ushakov/esc_pos_bluetooth) library.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages). 
--->
+It can be used in [Flutter](https://flutter.dev/) or pure [Dart](https://dart.dev/) projects. For Flutter projects, both Android, iOS, windows, Linux and MacOS are supported.
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+To scan for printers in your network, consider using [ping_discover_network](https://pub.dev/packages/ping_discover_network) package. Note that most of the ESC/POS printers by default listen on port 9100.
 
-## Features
+## TODO (PRs are welcomed!)
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+- Print QR Codes using the `GS ( k` command (printing QR code from an image already supported)
+- PDF-417 Barcodes using the `GS ( k` command
+- Line spacing using the `ESC 3 <n>` command
 
-## Getting started
+## How to Help
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+- Test your printer and add it in the table: [Wifi/Network printer](https://github.com/mjafartp/flutter_esc_pos_network/blob/master/printers.md) or [Bluetooth printer](https://github.com/andrey-ushakov/esc_pos_bluetooth/blob/master/printers.md)
+- Test and report bugs
+- Share your ideas about what could be improved (code optimization, new features...)
+- PRs are welcomed!
 
-## Usage
+## Tested Printers
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+Here are some [printers tested with this library](printers.md). Please add the models you have tested to maintain and improve this library and help others to choose the right printer.
+
+## Generate a Receipt
+
+### Simple Receipt with Styles:
 
 ```dart
-const like = 'sample';
+void testReceipt(NetworkPrinter printer) {
+  printer.text(
+        'Regular: aA bB cC dD eE fF gG hH iI jJ kK lL mM nN oO pP qQ rR sS tT uU vV wW xX yY zZ');
+  printer.text('Special 1: àÀ èÈ éÉ ûÛ üÜ çÇ ôÔ',
+      styles: PosStyles(codeTable: 'CP1252'));
+  printer.text('Special 2: blåbærgrød',
+      styles: PosStyles(codeTable: 'CP1252'));
+
+  printer.text('Bold text', styles: PosStyles(bold: true));
+  printer.text('Reverse text', styles: PosStyles(reverse: true));
+  printer.text('Underlined text',
+      styles: PosStyles(underline: true), linesAfter: 1);
+  printer.text('Align left', styles: PosStyles(align: PosAlign.left));
+  printer.text('Align center', styles: PosStyles(align: PosAlign.center));
+  printer.text('Align right',
+      styles: PosStyles(align: PosAlign.right), linesAfter: 1);
+
+  printer.text('Text size 200%',
+      styles: PosStyles(
+        height: PosTextSize.size2,
+        width: PosTextSize.size2,
+      ));
+
+  printer.feed(2);
+  printer.cut();
+}
 ```
 
-## Additional information
+You can find more examples here: [flutter_esc_pos_utils](https://github.com/mjafartp/flutter_esc_pos_utils).
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+## Print a Receipt
+
+```dart
+import 'package:flutter_esc_pos_network/flutter_esc_pos_network.dart';
+final printer = PrinterNetworkManager('192.168.1.100');
+    PosPrintResult connect = await printer.connect();
+    if (connect == PosPrintResult.success) {
+      PosPrintResult printing = await printer.printTicket(ticket);
+
+      print(printing.msg);
+      printer.disconnect();
+    }
+  }
+```
+
+For a complete example, check `example/example.dart`
