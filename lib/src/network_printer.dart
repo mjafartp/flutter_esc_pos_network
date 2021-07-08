@@ -28,8 +28,9 @@ class PrinterNetworkManager {
 
   Future<PosPrintResult> printTicket(List<int> ticket) async {
     try {
-      if (await _socket.isEmpty)
+      if (await _socket.isEmpty) {
         return Future<PosPrintResult>.value(PosPrintResult.printerConnected);
+      }
       if (ticket.isNotEmpty) {
         _socket.add(ticket);
         return Future<PosPrintResult>.value(PosPrintResult.success);
@@ -43,8 +44,9 @@ class PrinterNetworkManager {
   void disconnect({int delayMs = 0}) async {
     try {
       _socket.destroy();
-      if (delayMs > 0)
+      if (delayMs > 0) {
         await Future.delayed(Duration(milliseconds: delayMs), () => null);
+      }
     } catch (e) {
       return;
     }
