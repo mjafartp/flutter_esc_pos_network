@@ -28,9 +28,6 @@ class PrinterNetworkManager {
 
   Future<PosPrintResult> printTicket(List<int> ticket) async {
     try {
-      if (await _socket.isEmpty) {
-        return Future<PosPrintResult>.value(PosPrintResult.printerConnected);
-      }
       if (ticket.isNotEmpty) {
         _socket.add(ticket);
         return Future<PosPrintResult>.value(PosPrintResult.success);
