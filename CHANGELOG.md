@@ -1,4 +1,6 @@
 ## 1.0.0
+* Static analysis update
+## 1.0.0
 * flutter_esc_pos_utils dependency update
 * Rewrite printing and connection code for better disconnection handling
 ## 0.0.3
