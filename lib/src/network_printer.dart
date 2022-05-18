@@ -36,7 +36,7 @@ class PrinterNetworkManager {
       if (!_isConnected) {
         await connect();
       }
-      _socket?.add(data);
+      _socket.add(data);
       if (isDisconnect) {
         await disconnect();
       }
