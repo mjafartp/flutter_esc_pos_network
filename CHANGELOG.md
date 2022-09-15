@@ -1,3 +1,5 @@
+## 1.0.2
+* flutter_esc_pos_utils version update
 ## 1.0.1
 * Static analysis update
 ## 1.0.0
