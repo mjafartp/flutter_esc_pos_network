@@ -4,13 +4,13 @@ version: 1.0.2
 homepage: https://github.com/mjafartp/flutter_esc_pos_network
 
 environment:
-  sdk: ">=2.12.0 <3.0.0"
-  flutter: ">=1.17.0"
+  sdk: ">=3.2.3 <4.0.0"
+  flutter: ">=3.16.5"
 
 dependencies:
   flutter:
     sdk: flutter
-  flutter_esc_pos_utils: ^0.1.8
+  flutter_esc_pos_utils: ^1.0.0
 
 dev_dependencies:
   flutter_test:
