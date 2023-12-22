@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_esc_pos_utils: ^0.1.8
+  flutter_esc_pos_utils: ^1.0.0
 
 dev_dependencies:
   flutter_test:
