@@ -1,58 +1,126 @@
+import 'dart:async';
 import 'dart:io';
 import 'enums.dart';
 
 class PrinterNetworkManager {
-  late String _host;
-  int _port = 9100;
+  final String _host;
+  final int _port;
+  final Duration _timeout;
+  Socket? _socket;
   bool _isConnected = false;
-  Duration _timeout = const Duration(seconds: 5);
-  late Socket _socket;
+  bool _isPrinting = false;
 
   PrinterNetworkManager(
     String host, {
     int port = 9100,
     Duration timeout = const Duration(seconds: 5),
-  }) {
-    _host = host;
-    _port = port;
-    _timeout = timeout;
-  }
+  })  : _host = host,
+        _port = port,
+        _timeout = timeout;
 
-  Future<PosPrintResult> connect(
-      {Duration? timeout: const Duration(seconds: 5)}) async {
+  bool get isConnected => _isConnected;
+
+  Future<PosPrintResult> connect({Duration? timeout}) async {
+    // Close existing socket before creating a new one to prevent leaks
+    if (_socket != null) {
+      await _closeSocket();
+    }
+
     try {
-      _socket = await Socket.connect(_host, _port, timeout: _timeout);
+      _socket = await Socket.connect(
+        _host,
+        _port,
+        timeout: timeout ?? _timeout,
+      );
       _isConnected = true;
-      return Future<PosPrintResult>.value(PosPrintResult.success);
+      return PosPrintResult.success;
+    } on SocketException catch (e) {
+      _isConnected = false;
+      _socket = null;
+      if (e.osError?.errorCode == 61 || e.osError?.errorCode == 111) {
+        return PosPrintResult.connectionRefused;
+      }
+      return PosPrintResult.timeout;
     } catch (e) {
       _isConnected = false;
-      return Future<PosPrintResult>.value(PosPrintResult.timeout);
+      _socket = null;
+      return PosPrintResult.socketError;
     }
   }
 
-  Future<PosPrintResult> printTicket(List<int> data,
-      {bool isDisconnect = true}) async {
+  Future<PosPrintResult> printTicket(
+    List<int> data, {
+    bool isDisconnect = true,
+  }) async {
+    if (_isPrinting) {
+      return PosPrintResult.printInProgress;
+    }
+
+    if (data.isEmpty) {
+      return PosPrintResult.ticketEmpty;
+    }
+
+    _isPrinting = true;
     try {
-      if (!_isConnected) {
-        await connect();
+      if (!_isConnected || _socket == null) {
+        final connectResult = await connect();
+        if (connectResult != PosPrintResult.success) {
+          _isPrinting = false;
+          return connectResult;
+        }
       }
-      _socket.add(data);
+
+      _socket!.add(data);
+
       if (isDisconnect) {
-        await disconnect();
+        final disconnectResult = await disconnect();
+        if (disconnectResult != PosPrintResult.success) {
+          _isPrinting = false;
+          return disconnectResult;
+        }
       }
-      return Future<PosPrintResult>.value(PosPrintResult.success);
+
+      _isPrinting = false;
+      return PosPrintResult.success;
+    } on SocketException {
+      _isPrinting = false;
+      await _closeSocket();
+      return PosPrintResult.socketError;
     } catch (e) {
-      return Future<PosPrintResult>.value(PosPrintResult.timeout);
+      _isPrinting = false;
+      await _closeSocket();
+      return PosPrintResult.socketError;
     }
   }
 
   Future<PosPrintResult> disconnect({Duration? timeout}) async {
-    await _socket.flush();
-    await _socket.close();
-    _isConnected = false;
-    if (timeout != null) {
-      await Future.delayed(timeout, () => null);
+    try {
+      if (_socket != null) {
+        await _socket!.flush();
+        await _socket!.close();
+      }
+      _socket = null;
+      _isConnected = false;
+      if (timeout != null) {
+        await Future.delayed(timeout, () => null);
+      }
+      return PosPrintResult.success;
+    } catch (e) {
+      // Even if flush/close fails, clean up state
+      _socket = null;
+      _isConnected = false;
+      return PosPrintResult.disconnectError;
     }
-    return Future<PosPrintResult>.value(PosPrintResult.success);
+  }
+
+  /// Internal helper to safely close the socket without throwing
+  Future<void> _closeSocket() async {
+    try {
+      await _socket?.close();
+    } catch (_) {
+      // Ignore errors during cleanup
+    }
+    _socket = null;
+    _isConnected = false;
   }
 }

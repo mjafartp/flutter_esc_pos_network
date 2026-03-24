@@ -64,9 +64,10 @@ class NetworkPrinter {
     PosPrintResult connect = await printer.connect();
     if (connect == PosPrintResult.success) {
       PosPrintResult printing = await printer.printTicket(ticket);
-
       print(printing.msg);
-      printer.disconnect();
+      await printer.disconnect();
+    } else {
+      print(connect.msg);
     }
   }
 }

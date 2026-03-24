@@ -7,6 +7,9 @@ class PosPrintResult {
   static const ticketEmpty = PosPrintResult._internal(4);
   static const printInProgress = PosPrintResult._internal(5);
   static const scanInProgress = PosPrintResult._internal(6);
+  static const connectionRefused = PosPrintResult._internal(7);
+  static const socketError = PosPrintResult._internal(8);
+  static const disconnectError = PosPrintResult._internal(9);
 
   String get msg {
     if (value == PosPrintResult.success.value) {
@@ -21,6 +24,12 @@ class PosPrintResult {
       return 'Error. Another print in progress';
     } else if (value == PosPrintResult.scanInProgress.value) {
       return 'Error. Printer scanning in progress';
+    } else if (value == PosPrintResult.connectionRefused.value) {
+      return 'Error. Printer connection refused';
+    } else if (value == PosPrintResult.socketError.value) {
+      return 'Error. Socket error';
+    } else if (value == PosPrintResult.disconnectError.value) {
+      return 'Error. Failed to disconnect';
     } else {
       return 'Unknown error';
     }
